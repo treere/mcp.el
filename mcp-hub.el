@@ -103,12 +103,35 @@ Example:
                                    (plist-put
                                     tool
                                     :category
-                                    (format "mcp-%s"
-                                            name))
+                                    (format "mcp-%s" name))
                                  tool))
-                             res)))))
+                             res)))
+                   (when-let ((connection (gethash name mcp-server-connections))
+                              (resources (mcp--resources server)))
+                     (push (mcp-make-list-resources name)                           res))))
              mcp-server-connections)
     (nreverse res)))
+
+(defun mcp-make-list-resources (name)
+  (list
+   :function #'(lambda (callback &rest args)
+                 (if-let* ((connection (gethash name mcp-server-connections)))
+                     (mcp-async-list-resources
+                      connection
+                      #'(lambda (connection res)
+                          (funcall callback (json-encode res)))
+                      #'(lambda (code message)
+                          (funcall callback
+                                   (format "call %s tool error with %s: %s"
+                                           (format "list-%s-resources" name)
+                                           code
+                                           message))))
+                   (error "Error: %s server not connect" name)))
+   :name (format "list-%s-resources" name)
+   :async t
+   :description (format "list the resources that %s can provide" name)
+   :category (format "mcp-%s" name)
+   :args nil))
 
 ;;;###autoload
 (defun mcp-hub-start-all-server (&optional callback servers)
