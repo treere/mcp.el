@@ -956,11 +956,11 @@ succeeds, or ERROR-CALLBACK if it fails."
                            (funcall error-callback code message))))
 
 
-(defun mcp-list-resource-templates (connection &optional callback error-callback)
+(defun mcp-list-resource-templates (connection)
   "Get list of resource templates from the MCP server using the CONNECTION.
 
 CONNECTION is the MCP connection object."
-  (jsonrpc-request connection :resources/templates/list))
+  (jsonrpc-request connection :resources/templates/list nil))
 
 (defun mcp-async-list-resource-templates (connection &optional callback error-callback)
   "Get list of resource templates from the MCP server using the CONNECTION.
