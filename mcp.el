@@ -932,7 +932,7 @@ CONNECTION is the MCP connection object.
 URI is the uri of the resource to call."
   (jsonrpc-request connection
                    :resources/read
-                   (list :uri uri)))
+                   uri))
 
 (defun mcp-async-read-resource (connection uri &optional callback error-callback)
   "Call a resource on the remote CONNECTION with URI.
@@ -947,7 +947,7 @@ using the specified URI. The result is passed to CALLBACK if the request
 succeeds, or ERROR-CALLBACK if it fails."
   (jsonrpc-async-request connection
                          :resources/read
-                         (list :uri uri)
+                         uri
                          :success-fn
                          #'(lambda (res)
                              (funcall callback res))

@@ -93,8 +93,8 @@ Example:
   (let ((res ))
     (maphash #'(lambda (name server)
                  (when (and server
-                          (equal (mcp--status server)
-                                 'connected))
+                            (equal (mcp--status server)
+                                   'connected))
                    (when-let* ((tools (mcp--tools server))
                                (tool-names (mapcar #'(lambda (tool) (plist-get tool :name)) tools)))
                      (dolist (tool-name tool-names)
@@ -108,7 +108,8 @@ Example:
                              res)))
                    (when-let ((connection (gethash name mcp-server-connections))
                               (resources (mcp--resources server)))
-                     (push (mcp-make-list-resources name)                           res))))
+                     (push (mcp-make-list-resources name) res)
+                     (push (mcp-make-read-resource name) res))))
              mcp-server-connections)
     (nreverse res)))
 
@@ -132,6 +133,32 @@ Example:
    :description (format "list the resources that %s can provide" name)
    :category (format "mcp-%s" name)
    :args nil))
+
+(defun mcp-make-read-resource (name)
+  (let ((properties '(:uri (:type "string" :description "URI of the resource")))
+        (required '(:uri)))
+    (list
+     :function #'(lambda (callback &rest args)
+                   (when (< (length args) (length required))
+                     (error "Error: args not match: %s -> %s" required args))
+                   (if-let* ((connection (gethash name mcp-server-connections)))
+                       (mcp-async-read-resource
+                        connection
+                        (mcp--generate-tool-call-args args properties)
+                        #'(lambda (connection res)
+                            (funcall callback (json-encode res)))
+                        #'(lambda (code message)
+                            (funcall callback
+                                     (format "call %s tool error with %s: %s"
+                                             (format "list-%s-resources" name)
+                                             code
+                                             message))))
+                     (error "Error: %s server not connect" name)))
+     :name (format "read-%s-resource" name)
+     :async t
+     :description (format "Read a resource that %s can provide" name)
+     :category (format "mcp-%s" name)
+     :args (mcp--parse-tool-args properties required))))
 
 ;;;###autoload
 (defun mcp-hub-start-all-server (&optional callback servers)
@@ -263,8 +290,8 @@ prompts."
   (interactive)
   ;; start all server
   (when (and mcp-hub-servers
-           (= (hash-table-count mcp-server-connections)
-              0))
+             (= (hash-table-count mcp-server-connections)
+                0))
     (mcp-hub-start-all-server))
   ;; show buffer
   (pop-to-buffer "*Mcp-Hub*" nil)
