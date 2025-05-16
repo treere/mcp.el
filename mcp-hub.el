@@ -117,16 +117,7 @@ Example:
   (list
    :function #'(lambda (callback &rest args)
                  (if-let* ((connection (gethash name mcp-server-connections)))
-                     (mcp-async-list-resources
-                      connection
-                      #'(lambda (connection res)
-                          (funcall callback (json-encode res)))
-                      #'(lambda (code message)
-                          (funcall callback
-                                   (format "call %s tool error with %s: %s"
-                                           (format "list-%s-resources" name)
-                                           code
-                                           message))))
+                     (funcall callback (json-encode (mcp--resources connection)))
                    (error "Error: %s server not connect" name)))
    :name (format "list-%s-resources" name)
    :async t
